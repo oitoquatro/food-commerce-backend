@@ -10,9 +10,13 @@ const port = process.env.PORT || 5000; //config. da porta.
 app.use(express.json()); //config. o express para o tipo json.
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("Hello world!!!!!");
+  const { message } = req.body;
+  if (!message) return res.status(400).send({ error: "Message is required" });
+
+  res.send({ message });
 });
 
-app.listen(port, () => {   //mostrando para o express em qual porta o projeto está.
+app.listen(port, () => {
+  //mostrando para o express em qual porta o projeto está.
   console.log(`Server running on port ${port}`);
 });
