@@ -16,7 +16,6 @@ app.get("/", (req: Request, res: Response) => {
   res.send({ message });
 });
 
-app.listen(port, () => {
-  //mostrando para o express em qual porta o projeto está.
+app.listen(port, () => {  //mostrando para o express em qual porta o projeto está.
   console.log(`Server running on port ${port}`);
 });
