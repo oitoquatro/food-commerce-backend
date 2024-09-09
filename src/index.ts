@@ -36,6 +36,19 @@ app.get("/snacks", async (req: Request, res: Response) => {
   //Send no insomnia
 });
 
+app.get("/orders/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const order = await prisma.order.findUnique({//findUnique retorna apenas um valor.
+    where: {
+      id: +id, //converte o id para numero, como se fosse parseInt
+    },
+  });
+
+  if (!order) return res.status(404).send({ error: "Order not found" });
+  res.send(order);
+});
+
 app.listen(port, () => {
   //mostrando para o express em qual porta o projeto está.
   console.log(`Server running on port ${port}`);
