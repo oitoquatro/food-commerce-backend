@@ -48,6 +48,7 @@ app.get("/orders/:id", async (req: Request, res: Response) => {
     where: {
       id: +id, //converte o id para numero, como se fosse parseInt
     },
+    include: { customer: true, orderItens: { include: { snack: true } } },
   });
 
   if (!order) return res.status(404).send({ error: "Order not found" });

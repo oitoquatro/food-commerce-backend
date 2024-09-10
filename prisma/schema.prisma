@@ -22,7 +22,7 @@ model Snack {
   image       String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  orderItems OrderItem[]
+  orderItens OrderItem[]
 }
 
 model Customer {

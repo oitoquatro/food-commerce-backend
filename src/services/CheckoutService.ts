@@ -1,4 +1,4 @@
-import { Customer, PrismaClient } from "@prisma/client";
+import { Customer, Order, PrismaClient } from "@prisma/client";
 import { CustomerData } from "../interfaces/CustomerData";
 import { PaymentData } from "../interfaces/PaymentData";
 import { SnackData } from "../interfaces/SnackData";
@@ -37,9 +37,11 @@ export default class CheckoutService {
     }));
     //console.log(`snacksInCart`, snacksInCart);
     // TODO: "registrar" os dados do cliente no BD
-    const customerCreated = await this.createCustomer(customer)
-    console.log(`customerCreated`, customerCreated)
+    const customerCreated = await this.createCustomer(customer);
+    //console.log(`customerCreated`, customerCreated);
     // TODO: criar uma order
+    const orderCreated = await this.createOrder(snacksInCart, customerCreated);
+    console.log(`orderCreated`, orderCreated);
     // TODO: processar o pagamento
   }
 
@@ -47,12 +49,41 @@ export default class CheckoutService {
     const customerCreated = await this.prisma.customer.upsert({
       //onde o email solicitado for válido faz o update (atualiza) senão tem que criar um.
       where: {
-        email: customer.email,
+        email: customer.email
       },
       update: customer,
       create: customer,
     });
 
-    return customerCreated
+    return customerCreated;
+  }
+
+  private async createOrder(
+    snacksInCart: SnackData[],
+    customer: Customer
+  ): Promise<Order> {
+    const total = snacksInCart.reduce((acc, snack) => acc + snack.subTotal, 0); // acc = acúmulo.
+    const orderCreated = await this.prisma.order.create({
+      data: {
+        total,
+        customer: {
+          connect: { id: customer.id },
+        },
+        orderItens: {
+          createMany: {
+            data: snacksInCart.map((snack) => ({
+              snackId: snack.id,
+              quantity: snack.quantity,
+              subTotal: snack.subTotal,
+            })),
+          },
+        },
+      },
+      include: {
+        customer: true,
+        orderItens: { include: { snack: true } },
+      },
+    });
+    return orderCreated;
   }
 }
