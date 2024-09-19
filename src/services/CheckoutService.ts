@@ -16,7 +16,7 @@ export default class CheckoutService {
     cart: SnackData[],
     customer: CustomerData,
     payment: PaymentData
-  ) {
+  ): Promise<{ id: number; transactionId: string; status: string }> {
     // TODO: "puxar" os dados de snacks do BD
     // O findMany() vai buscar onde (where) o id estiver em (in) cart.map...
     const snacks = await this.prisma.snack.findMany({
@@ -41,21 +41,35 @@ export default class CheckoutService {
     const customerCreated = await this.createCustomer(customer);
     //console.log(`customerCreated`, customerCreated);
     // TODO: criar uma order
-    const orderCreated = await this.createOrder(snacksInCart, customerCreated);
+    let orderCreated = await this.createOrder(snacksInCart, customerCreated);
     console.log(`orderCreated`, orderCreated);
     // TODO: processar o pagamento
-    const transaction = await new PaymentService().process(
+    const { transactionId, status } = await new PaymentService().process(
       orderCreated,
       customerCreated,
       payment
-    )
+    );
+
+    orderCreated = await this.prisma.order.update({
+      where: { id: orderCreated.id },
+      data: {
+        transactionId,
+        status,
+      },
+    });
+
+    return {
+      id: orderCreated.id,
+      transactionId: orderCreated.transactionId!,
+      status: orderCreated.status,
+    };
   }
 
   private async createCustomer(customer: CustomerData): Promise<Customer> {
     const customerCreated = await this.prisma.customer.upsert({
       //onde o email solicitado for válido faz o update (atualiza) senão tem que criar um.
       where: {
-        email: customer.email
+        email: customer.email,
       },
       update: customer,
       create: customer,
